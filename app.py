@@ -43,7 +43,7 @@ def extract_html_from_pdf(filepath):
     try:
         with fitz.open(filepath) as doc:
             for page in doc:
-                html_content += page.get_text("html")  # Extrahiere HTML der Seite
+                html_content += page.get_text("text")  # Extrahiere HTML der Seite
         return html_content
     except Exception as e:
         raise RuntimeError(f"Error extracting HTML from PDF: {e}")
