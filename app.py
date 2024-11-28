@@ -20,9 +20,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max 16MB
 API_KEY = os.getenv('API_KEY', 'default-key')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Initialize the limiter
+# Initialize the limiter with keyword arguments
 limiter = Limiter(
-    app,
+    app=app,
     key_func=get_remote_address,
     default_limits=["100 per day", "50 per hour"]  # Global rate limits
 )
