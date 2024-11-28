@@ -3,4 +3,3 @@ PyMuPDF
 python-dotenv
 Werkzeug
 gunicorn
-flask-limiter
