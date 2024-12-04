@@ -4,6 +4,8 @@ import os
 from werkzeug.utils import secure_filename
 from functools import wraps
 from dotenv import load_dotenv
+from tempfile import NamedTemporaryFile
+import mimetypes
 
 # Lade Environment-Variablen
 load_dotenv()
@@ -31,7 +33,7 @@ def not_found_error(e):
 
 @app.errorhandler(500)
 def internal_error(e):
-    return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    return jsonify({"error": "Internal server error"}), 500
 
 @app.errorhandler(413)
 def file_too_large(e):
@@ -71,18 +73,21 @@ def pdf_to_html():
         return jsonify({"status": "error", "message": "No file selected", "code": 400}), 400
 
     try:
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        with NamedTemporaryFile(delete=True, suffix='.pdf') as temp_file:
+            file.save(temp_file.name)
 
-        # HTML-Extraktion
-        html_content = extract_html_from_pdf(filepath)
-        os.remove(filepath)
+            # MIME-Typ überprüfen
+            mime_type, _ = mimetypes.guess_type(temp_file.name)
+            if mime_type != 'application/pdf':
+                return jsonify({"status": "error", "message": "File is not a valid PDF", "code": 400}), 400
+
+            # HTML-Extraktion
+            html_content = extract_html_from_pdf(temp_file.name)
 
         return jsonify({
             "status": "success",
             "data": {
-                "filename": filename,
+                "filename": file.filename,
                 "html": html_content
             },
             "message": "HTML successfully extracted."
@@ -91,7 +96,7 @@ def pdf_to_html():
         return jsonify({
             "status": "error",
             "message": "Failed to process PDF.",
-            "details": str(e),
+            "details": "An internal error occurred.",
             "code": 500
         }), 500
 
@@ -107,18 +112,21 @@ def pdf_to_text():
         return jsonify({"status": "error", "message": "No file selected", "code": 400}), 400
 
     try:
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        with NamedTemporaryFile(delete=True, suffix='.pdf') as temp_file:
+            file.save(temp_file.name)
 
-        # Text-Extraktion
-        text_content = extract_text_from_pdf(filepath)
-        os.remove(filepath)
+            # MIME-Typ überprüfen
+            mime_type, _ = mimetypes.guess_type(temp_file.name)
+            if mime_type != 'application/pdf':
+                return jsonify({"status": "error", "message": "File is not a valid PDF", "code": 400}), 400
+
+            # Text-Extraktion
+            text_content = extract_text_from_pdf(temp_file.name)
 
         return jsonify({
             "status": "success",
             "data": {
-                "filename": filename,
+                "filename": file.filename,
                 "text": text_content
             },
             "message": "Text successfully extracted."
@@ -127,7 +135,7 @@ def pdf_to_text():
         return jsonify({
             "status": "error",
             "message": "Failed to process PDF.",
-            "details": str(e),
+            "details": "An internal error occurred.",
             "code": 500
         }), 500
 
